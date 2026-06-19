@@ -11,36 +11,60 @@ import Experience from './components/Experience';
 import Achievements from './components/Achievements';
 import Contact from './components/Contact';
 
-// --- The Scroll-Animated 3D Component ---
+// --- The Scroll-Animated 3D Component with Section Awareness ---
 function PlaceholderCube() {
   const meshRef = useRef();
 
-  // useFrame runs 60 times per second (like a video game loop)
   useFrame((state) => {
-    // 1. Calculate the exact scroll percentage (from 0.0 at top to 1.0 at bottom)
     const scrollY = window.scrollY;
     const maxScroll = document.body.scrollHeight - window.innerHeight;
     const scrollProgress = scrollY / maxScroll || 0;
 
     if (meshRef.current) {
-      // 2. Animate the Object: Spin the cube based on how far we scrolled
-      // Math.PI * 4 means it will do exactly 2 full spins by the time you hit the footer
-      meshRef.current.rotation.y = scrollProgress * Math.PI * 4;
-      meshRef.current.rotation.x = scrollProgress * Math.PI * 2;
+      // =========================================================
+      // 1. THE VISIBILITY TIMELINE
+      // =========================================================
+      
+      // Home Section (Top of page) -> Show & Spin
+      if (scrollProgress >= 0 && scrollProgress < 0.16) {
+        meshRef.current.visible = true;
+        meshRef.current.position.set(0, 0, 0); // Center stage
+        meshRef.current.rotation.y = scrollProgress * Math.PI * 4;
+      } 
+      
+      // Skills Section -> Show & "Robo Scan" movement (panning left/right)
+      else if (scrollProgress >= 0.16 && scrollProgress < 0.33) {
+        meshRef.current.visible = true;
+        // Shift slightly to the side to clear space for text, and do a quick back-and-forth scan
+        meshRef.current.position.x = Math.sin(scrollProgress * 20) * 1.5; 
+        meshRef.current.position.y = 0;
+      } 
+      
+      // Projects, Experience, & Achievements Sections -> HIDE COMPLETELY
+      else if (scrollProgress >= 0.33 && scrollProgress < 0.83) {
+        meshRef.current.visible = false; 
+      } 
+      
+      // Contact Section -> Show again for the finale
+      else if (scrollProgress >= 0.83) {
+        meshRef.current.visible = true;
+        meshRef.current.position.set(0, -1, 0); // Drop it slightly lower or adjust position
+        meshRef.current.rotation.y = scrollProgress * Math.PI * 2;
+      }
     }
 
-    // 3. Animate the Camera: Move the camera down smoothly as you scroll
-    // It starts at height 2, and moves down to height -2 by the end
+    // =========================================================
+    // 2. CAMERA MOVEMENTS
+    // =========================================================
+    // Keep the camera panning smoothly behind the scenes
     state.camera.position.y = 2 - (scrollProgress * 4);
-    
-    // Force the camera to always look at the center of the scene, no matter where it moves
     state.camera.lookAt(0, 0, 0);
   });
 
   return (
     <mesh ref={meshRef} position={[0, 0, 0]}>
       <boxGeometry args={[2, 2, 2]} />
-      <meshStandardMaterial color="#2dd4bf" emissive="#0f766e" />
+      <meshStandardMaterial color="#f97316" />
     </mesh>
   );
 }
@@ -48,7 +72,7 @@ function PlaceholderCube() {
 // --- Main Application ---
 function App() {
   return (
-    <div className="relative min-h-screen bg-slate-950 text-slate-100 font-sans antialiased scroll-smooth">
+    <div className="relative min-h-screen bg-[#f4ebe1] text-[#3d3630] font-sans antialiased scroll-smooth">
       
       {/* =========================================
           LAYER 1: The 3D World (Fixed Background)
